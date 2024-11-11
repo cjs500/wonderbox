@@ -54,7 +54,7 @@
 	<div class="grid1_col">Number of worker instances that will launch and be managed by the cluster module</div>
 	<div class="grid1_col">cache_on</div>
 	<div class="grid1_col"><blue>true</blue> or <blue>false</blue></div>
-	<div class="grid1_col">When the server serves files, it will typically cache to content. This setting tells the server to delete the cache after each load otherwise a server process needs to be restart.</div>
+	<div class="grid1_col">This setting tells the server to delete the cache after each load (in CommonJS mode) or restart process (in ECMAScript mode). The server process needs to be restart manually when set to '<blue>true</blue>'.</div>
 	<div class="grid1_col">debug_mode_on</div>
 	<div class="grid1_col"><blue>true</blue> or <blue>false</blue></div>
 	<div class="grid1_col">There is more output at the console screen for troubleshooting needs. Best used for local installation with 1 worker process. More than 1 worker process disables debug more as there is many more outputs to console.</div>

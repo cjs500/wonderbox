@@ -29,7 +29,7 @@ SOFTWARE.
 const __dirname = import.meta.dirname;
 
 //Set Node JS constants
-import * as path from "path";
+import { manage_server } from "../../class/manage_server.mjs";
 
 //Set response data
 var _response = {
@@ -63,17 +63,8 @@ export async function request(params={}) {
 		user_ip = _client.remote_ip_xff;
 	}
 	
-    //Adjust windows path issues
-    let class_path = path.join(path.dirname(path.dirname(__dirname)),"class","manage_server.mjs");
-    if(class_path.includes("\\")) {
-        class_path = class_path.replaceAll("\\", "/");
-        class_path = class_path.substring(2,(class_path.length));
-    }
-
     //Initialize class
-    const server = await import(class_path);
-    const manage_server = server.manage_server;
-	var mgmt = await new manage_server(user_cookie, user_agent, user_ip);
+    var mgmt = new manage_server(user_cookie, user_agent, user_ip);
 
 	//Response
 	let api_response = null;

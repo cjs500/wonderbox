@@ -51,7 +51,7 @@ const logger = new vhost_logger()
 const mapping = new vhost_mapping()
 
 //Manage class
-export class manage_server {
+class manage_server {
     //System details
     application = "Purrbox";
     application_ver = "x.x.x";
@@ -5073,4 +5073,4 @@ export class manage_server {
 }
 
 //Export modules
-export default manage_server;
+export { manage_server};

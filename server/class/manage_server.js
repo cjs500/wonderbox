@@ -3903,6 +3903,7 @@ class manage_server {
             ".htm",
             ".css",
             ".js",
+            ".mjs",
             ".txt",
             ".json",
             ".conf",

@@ -3906,6 +3906,7 @@ export class manage_server {
             ".htm",
             ".css",
             ".js",
+            ".mjs",
             ".txt",
             ".json",
             ".conf",
@@ -4133,14 +4134,10 @@ export class manage_server {
         // Do command ///////////////
 
         //Set paths
-        //let file_type_path = `${this.paths.server}default_file_types${s}`;
         let file_type_path = path.join(this.paths.server, "default_file_types");
-        //let file_type_html = `${file_type_path}file_type.html`;
-        //let file_type_css = `${file_type_path}file_type.css`;
-        //let file_type_api = `${file_type_path}file_type.js`;
         let file_type_html = path.join(file_type_path, "file_type.html");
         let file_type_css = path.join(file_type_path, "file_type.css");
-        let file_type_api = path.join(file_type_path, "file_type.js");
+        let file_type_api = path.join(file_type_path, "file_type.mjs");
 
         //Set file contents
         let file_content = "";

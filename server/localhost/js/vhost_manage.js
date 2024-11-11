@@ -1265,6 +1265,7 @@ function ui_dir_jstree_format(dir, files="") {
             switch(dir[i].ext) {
                 case ".html":   dir[i]["icon"] = `images/file_html_${locked}icon.png`; break;
                 case ".js":     dir[i]["icon"] = `images/file_js_${locked}icon.png`; break;
+                case ".mjs":    dir[i]["icon"] = `images/file_js_${locked}icon.png`; break;
                 case ".css":    dir[i]["icon"] = `images/file_json_css_${locked}icons.png`; break;
                 case ".json":   dir[i]["icon"] = `images/file_json_css_${locked}icons.png`; break;
                 case ".txt":    dir[i]["icon"] = `images/file_txt_${locked}icon.png`; break;
@@ -4439,6 +4440,7 @@ function ui_project_files_tree(dir) {
                 ".htm",
                 ".css",
                 ".js",
+                ".mjs",
                 ".txt",
                 ".json",
                 ".conf",

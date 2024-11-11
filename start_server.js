@@ -92,6 +92,9 @@ if(cluster.isMaster) {
     console.log(" ═══════════════════════════════════════════════════════════════════════════════");
     console.log();
 
+    //Output server details
+    server.output_server_settings();
+
     //Verify settings to start
     if(debug_mode == true && workers > 1) {
         console.log("   ** Debug mode is disabled when running more than one worker process");
@@ -114,9 +117,6 @@ if(cluster.isMaster) {
 }else{
 
     console.log(` :: VHost Worker started. pid[${process.pid}]`);
-
-    //Output server settings (debug mode = true, worker = 1)
-    server.output_server_settings();
 
     //Load web source configs
     server.refresh_web_configs();

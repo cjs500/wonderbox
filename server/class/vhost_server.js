@@ -1019,32 +1019,38 @@ class vhost_server {
 
     //Debug mode output
     output_server_settings() {
-        if(this.debug_mode_on == true && this.workers == 1) {
-            let auto_refresh_timer = `${this.auto_refresh_timer.toString()} milliseconds`;
+        let auto_refresh_timer = `${this.auto_refresh_timer.toString()} milliseconds`;
 
-            this.consolelog(" ═══════════════════════════════════════════════════════════════════════════════");
-            this.consolelog(" Node.js VHost Server");
-            this.consolelog(`   Node Version            : ${process.version}`);
-            this.consolelog(`   Platform                : ${process.platform}`);
-            this.consolelog(`   Hostname                : ${this.hostname}`);
-            this.consolelog(`   IPv4 Address            : ${this.ipv4_address}`);
-            this.consolelog(`   IPv6 Address            : ${this.ipv6_address}`);
-            this.consolelog("");
-            this.consolelog(`   Management Mode         : ${this.mgmt_mode}`);
-            this.consolelog(`   Management UI Hostnames : ${this.mgmt_ui.toString()}`);
-            this.consolelog(`   Environment             : ${this.environment}`);
-            this.consolelog(`   Cache Mode On           : ${this.cache_on}`);
-            this.consolelog(`   Debug Mode On           : ${this.debug_mode_on}`);
-            this.consolelog(`   Auto Refresh            : ${this.auto_refresh_on}`);
-            this.consolelog(`   Auto Refresh Interval   : ${auto_refresh_timer}`);
-            this.consolelog(`   HTTP State              : ${this.http_on}`);
-            this.consolelog(`   HTTP Port               : ${this.http_port.toString()}`);
-            this.consolelog(`   HTTPS State             : ${this.https_on}`);
-            this.consolelog(`   HTTPS Port              : ${this.https_port.toString()}`);
-            this.consolelog(`   SSL Key File            : ${this.ssl_key.toString()}`);
-            this.consolelog(`   SSL Cert File           : ${this.ssl_cert.toString()}`);                
-            this.consolelog(" ═══════════════════════════════════════════════════════════════════════════════");
+        //Create list of management UI hostnames
+        let mgmt_ui_name = (this.mgmt_ui.toString().split(","));
+        let mgmt_list = `\n      ${mgmt_ui_name[0]}`;
+        for(let i = 1 ; i < mgmt_ui_name.length ; i++) {
+            let mgmt_ui_item = `      ${mgmt_ui_name[i]}`;
+            mgmt_list += `\n${mgmt_ui_item}`;
         }
+
+        this.consolelog(" ═══════════════════════════════════════════════════════════════════════════════");
+        this.consolelog(" Node.js VHost Server");
+        this.consolelog(`   Node Version            : ${process.version}`);
+        this.consolelog(`   Platform                : ${process.platform}`);
+        this.consolelog(`   Hostname                : ${this.hostname}`);
+        this.consolelog(`   IPv4 Address            : ${this.ipv4_address}`);
+        this.consolelog(`   IPv6 Address            : ${this.ipv6_address}`);
+        this.consolelog("");
+        this.consolelog(`   Management Mode         : ${this.mgmt_mode}`);
+        this.consolelog(`   Management UI Hostnames : ${mgmt_list}`);
+        this.consolelog(`   Environment             : ${this.environment}`);
+        this.consolelog(`   Cache Mode On           : ${this.cache_on}`);
+        this.consolelog(`   Debug Mode On           : ${this.debug_mode_on}`);
+        this.consolelog(`   Auto Refresh            : ${this.auto_refresh_on}`);
+        this.consolelog(`   Auto Refresh Interval   : ${auto_refresh_timer}`);
+        this.consolelog(`   HTTP State              : ${this.http_on}`);
+        this.consolelog(`   HTTP Port               : ${this.http_port.toString()}`);
+        this.consolelog(`   HTTPS State             : ${this.https_on}`);
+        this.consolelog(`   HTTPS Port              : ${this.https_port.toString()}`);
+        this.consolelog(`   SSL Key File            : ${this.ssl_key.toString()}`);
+        this.consolelog(`   SSL Cert File           : ${this.ssl_cert.toString()}`);                
+        this.consolelog(" ═══════════════════════════════════════════════════════════════════════════════");
 
         //Update legacy settings
         if(this.legacy_config == true) {

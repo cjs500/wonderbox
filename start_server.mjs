@@ -30,48 +30,16 @@ Web server start script, node process cluster manager
 
 */
 
-//Check modules exist
-try{
-    //Test modules
-    let module_test = null;
-    module_test = require("cluster")
-    module_test = require("ip")
-    module_test = require("bcrypt")
-    module_test = require("crypto")
-    module_test = require("jsonwebtoken")
-    module_test = require("syslog-client")
+//Import node modules
+import cluster from "node:cluster";
 
-    //Cleanup before load
-    delete module_test;
-    for(let cached in require.cache) {
-        delete require.cache[cached];
-    }
-}catch(e) {
-    console.log(e.message)
-    console.log("")
-    console.log("Modules required:")
-    console.log(" - ip")
-    console.log(" - bcrypt")
-    console.log(" - crypto")
-    console.log(" - jsonwebtoken")
-    console.log(" - syslog-client")
-    console.log("")
-    console.log("npm install ip bcrypt crypto jsonwebtoken syslog-client")
-    console.log("")
-    process.exit()
-}
+//Import vhost server class
+import vhost_server from "./server/class/vhost_server.mjs";
+import vhost_logger from "./server/class/vhost_logger.mjs";
 
-//Set Node JS constants
-const cluster = require("cluster");
-const path = require("path");
-
-//Set vhost class
-const vhost_server = require(path.join(__dirname,"server","class","vhost_server.js"));
-const server = new vhost_server()
-
-//Set vhost logger
-const vhost_logger = require(path.join(__dirname,"server","class","vhost_logger.js"));
-const logger = new vhost_logger()
+//Create class
+const server = new vhost_server();
+const logger = new vhost_logger();
 
 //Set parameters
 var app_ver = `${server.application} ${server.application_ver} ${server.application_mode}`
@@ -79,6 +47,8 @@ var workers = server.get("workers")
 var debug_mode = server.get("debug_mode_on")
 var auto_refresh = server.get("auto_refresh_on")
 var refresh_timer = server.get("auto_refresh_timer")
+var cache_on = server.get("cache_on")
+var cache_reset_timer = null;
 
 //Cluster
 if(cluster.isMaster) {
@@ -101,15 +71,39 @@ if(cluster.isMaster) {
         process.exit();
     }
 
+    //Set message listener
+    function worker_listeners() {
+        for (let id in cluster.workers) {
+            cluster.workers[id].on('message', worker_msg);
+        }
+    }
+    //Check for worker messages
+    function worker_msg(msg) {
+        console.log(` :: Cluster Worker message: ${msg}`)
+
+        //Set worker reset if no timer set and 
+        if(msg == "cache_reset" && cache_reset_timer == null) {
+            cache_reset_timer = setTimeout(worker_reset, 1000);
+        }
+    }
+    function worker_reset() {
+        cache_reset_timer = null;
+        for (let id in cluster.workers) {
+            cluster.workers[id].kill();
+        }
+    }
+
     //Start workers
     for (let i = 0; i < workers; i++) {
         cluster.fork();
     }
+    worker_listeners();
 
-    // Restart node on failure
+    //Restart node on failure
     cluster.on("exit", (worker, code, signal) => {
         console.log(` :: VHost Worker exit :: pid[${worker.process.pid}] code[${code}] signal[${signal}]`);
         cluster.fork();
+        worker_listeners();
     });
 }else{
 

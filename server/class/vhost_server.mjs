@@ -1,3 +1,5 @@
+'use strict';
+
 /*
 
 MIT License
@@ -34,20 +36,23 @@ VHost server class (web services)
 // Node JS virtual host server
 //
 
+//Set dirname
+const __dirname = import.meta.dirname;
+
 //Set Node JS constants
-const http = require("http");
-const https = require("https");
-const url = require("url");
-const os = require("os");
-const fs = require("fs");
-const path = require("path");
+import http from "http"
+import https from "https"
+import * as url from "url"
+import * as os from "os"
+import * as fs from "fs"
+import * as path from "path";
 
-//Set vhost logger
-const vhost_logger = require(path.join(__dirname,"vhost_logger.js"));
+//Import classes
+import vhost_logger from "./vhost_logger.mjs";
+import vhost_mapping from "./vhost_mapping.mjs";
+
+//Initialize classes
 const logger = new vhost_logger()
-
-//Set vhost logger
-const vhost_mapping = require(path.join(__dirname,"vhost_mapping.js"));
 const mapping = new vhost_mapping()
 
 //Server class
@@ -55,7 +60,7 @@ class vhost_server {
     //System details
     application = "Purrbox";
     application_ver = "x.x.x";
-    application_mode = "(CommonJS)";
+    application_mode = "(ECMAScript)";
     hostname = "localhost";     //Hostname of running instance
     ipv4_address = "";          //Local IPv4 address
     ipv6_address = "";          //Local IPv6 address
@@ -81,8 +86,8 @@ class vhost_server {
     auto_refresh_on=true;       //Web project configuration auto reload on changes
     auto_refresh_timer=10000;   //Time check for config changes (1,000 = 1 second)
 
-    //Start up cached files
-    running_cache = {}
+    //Signal to restart process (unload modules - cache mode false)
+    reset_process = false;
 
     //System paths
     paths = {}                  //System paths
@@ -109,8 +114,7 @@ class vhost_server {
             this.debug_mode_on = false;
         }
 
-        //Capture cached files
-        this.running_cache = JSON.parse(JSON.stringify(require.cache));
+        //ECMAScript doesn't use require cache
 
         //Run startup map
         mapping.map_generate()
@@ -802,11 +806,10 @@ class vhost_server {
             _request.fixed_api_path = request_match.fixed_api_path;
         }
 
-        //Unload the server side file if cache is false (used when content is static)
-        if(this.cache_on == false) {
-            //delete require.cache[file_path];
-            this.clear_cahced()
-        }
+        //
+        // Cache function not used is ECMAScript, use process kill and cluster restart process
+        // Process kill for sever side execute only
+        //
 
         //Handle exec type
         if(exec_mode == "client") {
@@ -873,10 +876,16 @@ class vhost_server {
         }
     }
     async exec_server_side(res, file_path, params, this_request) {
+        //Adjust windows path issues
+        if(file_path.includes("\\")) {
+            file_path = file_path.replaceAll("\\", "/");
+            file_path = file_path.substring(2,(file_path.length));
+        }
+
         //Run server side code
         try {
             //Include server side code
-            let exec_javascript = require(file_path);
+            let exec_javascript = await import(file_path);
 
             //Execute request and get response
             let response = await exec_javascript.request(params);
@@ -885,6 +894,13 @@ class vhost_server {
             this.exec_server_side_response(res, file_path, response, this_request)
         }catch(err){
             this.exec_server_side_error(res, file_path, err, this_request);
+        }
+
+        //Restart process
+        if(this.cache_on == false) {
+            //Reset processes
+            console.log(` :: Cache mode disabled - terminate worker process to reload modules`)
+            process.send("cache_reset")
         }
     }
     exec_server_side_response(res, file_path, response, this_request) {
@@ -954,7 +970,7 @@ class vhost_server {
     }
     exec_server_side_error(res, file_path, catch_error, this_request) {
         //Unload the server side file on error
-        delete require.cache[file_path];
+        //delete require.cache[file_path];
 
         //End time and request log
         let time = new Date()
@@ -1064,4 +1080,4 @@ class vhost_server {
 }
 
 //Export modules
-module.exports = vhost_server;
+export default vhost_server;

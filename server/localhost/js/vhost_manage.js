@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 //Vars
+var application = {}
+
 var server_configs = {}
 var server_paths = {}
 var protected_paths = {}
@@ -1353,6 +1355,11 @@ function ui_page_layout() {
 //Build page content
 function ui_page_content(data) {
     log("ui_page_content")
+
+    //Set application details
+    application = data.application;
+    $("#app_name").html(application.name);
+    $("#app_version").html(`${application.version} ${application.mode}`);
 
     //Store configs
     server_configs = data.server;

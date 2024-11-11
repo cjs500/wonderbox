@@ -34,25 +34,28 @@ Management class for localhost host Dev UI
 // Node JS manage projects
 //
 
-//Set Node JS constants
-const fs = require("fs");
-const path = require("path");
+//Set dirname
+const __dirname = import.meta.dirname;
 
-//Import modules
-const jwt_auth = require(path.join(path.dirname(__dirname),"class","jwt_auth.js"));
-const vhost_logger = require(path.join(__dirname,"vhost_logger.js"));
-const vhost_mapping = require(path.join(__dirname,"vhost_mapping.js"));
+//Set Node JS constants
+import * as fs from "fs"
+import * as path from "path"
+
+//Import classes
+import jwt_auth from "./jwt_auth.mjs";
+import vhost_logger from "./vhost_logger.mjs";
+import vhost_mapping from "./vhost_mapping.mjs";
 
 //Initialize classes
 const logger = new vhost_logger()
 const mapping = new vhost_mapping()
 
 //Manage class
-class manage_server {
+export class manage_server {
     //System details
     application = "Purrbox";
     application_ver = "x.x.x";
-    application_mode = "(CommonJS)";
+    application_mode = "(ECMAScript)";
 
     //General settings
     paths = {}
@@ -5073,4 +5076,4 @@ class manage_server {
 }
 
 //Export modules
-module.exports = manage_server;
+export default manage_server;

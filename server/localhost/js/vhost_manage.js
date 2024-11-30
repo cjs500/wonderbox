@@ -4451,6 +4451,7 @@ function ui_project_files_tree(dir) {
                 ".cpp",
                 ".cs",
                 ".h",
+                ".yaml",
                 ""
             ]
             if(match_ext.indexOf(data.node.original.ext) > -1) {

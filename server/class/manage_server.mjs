@@ -3917,6 +3917,7 @@ class manage_server {
             ".cpp",
             ".cs",
             ".h",
+            ".yaml",
             ""
         ]
         if(match_ext.indexOf(file_ext) == -1) {

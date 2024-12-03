@@ -104,11 +104,6 @@ class vhost_server {
         //Load vhost_server config
         this.load_server_config();
 
-        //Disable debug mode with more than one worker process
-        if(this.workers > 1) {
-            this.debug_mode_on = false;
-        }
-
         //Capture cached files
         this.running_cache = JSON.parse(JSON.stringify(require.cache));
 
@@ -598,9 +593,6 @@ class vhost_server {
         })
     }
     client_request(protocol, req, res) {
-        //Set logger target name
-        //logger.target_log_name = "devui"
-
         //Start time
         let time = new Date();
         let start_time = time.getTime();
@@ -809,7 +801,7 @@ class vhost_server {
             time = new Date()
             end_time = time.getTime()
             this_request["time"] = (end_time-start_time);
-            this_request["message"] = `Request Time [${this_request["time"]} ms] > [${request_match.status_code}] ${this_request["full_url"]}`;
+            this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request["full_url"]}`;
             this.log(this_request)
 
             //Send client side files
@@ -854,7 +846,7 @@ class vhost_server {
             //Update log output
             this_request["source"] = "system";
             this_request["state"] = "error";
-            this_request["message"] = `Request Time [${this_request["time"]} ms] > [500] Failed to define client or server handling for file: ${file_path}`;
+            this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [500] Failed to define client or server handling for file: ${file_path}`;
             this_request["status_code"] = 500;
             this_request["status_msg"] = "System error classifying file to execute server side or send to client";
 
@@ -906,7 +898,7 @@ class vhost_server {
                 this_request["time"] = (end_time - this_request["time"]);
 
                 //Update log output
-                this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.status_code}] ${this_request.full_url}`;
+                this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request.full_url}`;
 
                 //Send log
                 this.log(this_request);
@@ -936,7 +928,7 @@ class vhost_server {
 
         //Update log output
         this_request["state"] = "error";
-        this_request["message"] = `Request Time [${this_request["time"]} ms] > [500] ${this_request["full_url"]}`;
+        this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [500] ${this_request.full_url}`;
         this_request["status_code"] = 500;
         this_request["status_msg"] = `500 Internal Server Error: ${file_path}, response null`;
 
@@ -958,7 +950,7 @@ class vhost_server {
 
         //Update log output
         this_request["state"] = "error";
-        this_request["message"] = `Request Time [${this_request["time"]} ms] > [500] ${this_request["full_url"]}`;
+        this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [500] ${this_request.full_url}`;
         this_request["status_code"] = 500;
         this_request["status_msg"] = `500 Internal Server Error: ${file_path}`;
         this_request["stack_trace"] = catch_error.stack;

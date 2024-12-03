@@ -2322,7 +2322,7 @@ function ui_resolve_panel() {
                         if(https_port == "443") {
                             this_https_url = `https://${this_hostname}${this_path}`;
                         }else{
-                            this_https_url = `https://${this_hostname}:${http_port}${this_path}`;
+                            this_https_url = `https://${this_hostname}:${https_port}${this_path}`;
                         }
                         this_https_a = `<a href="${this_https_url}" target="_blank">HTTPS</a>`;
                     }else{
@@ -3208,7 +3208,7 @@ function ui_websites_resolve() {
                     if(https_port == "443") {
                         this_https_url = `https://${this_hostname}${this_path}`;
                     }else{
-                        this_https_url = `https://${this_hostname}:${http_port}${this_path}`;
+                        this_https_url = `https://${this_hostname}:${https_port}${this_path}`;
                     }
                     this_https_a = `<a href="${this_https_url}" target="_blank">HTTPS</a>`;
                 }else{

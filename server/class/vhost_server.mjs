@@ -799,7 +799,7 @@ class vhost_server {
             time = new Date()
             end_time = time.getTime()
             this_request["time"] = (end_time-start_time);
-            this_request["message"] = `Request Time [${this_request["time"]} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request["full_url"]}`;
+            this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request.full_url}`;
             this.log(this_request)
 
             //Send client side files
@@ -951,8 +951,8 @@ class vhost_server {
         res.end(`{"error":"500 Internal Server Error"}`);
     }
     exec_server_side_error(res, file_path, catch_error, this_request) {
-        //Unload the server side file on error
-        //delete require.cache[file_path];
+        //Delete cache not required in ECMAScript
+        //
 
         //End time and request log
         let time = new Date()

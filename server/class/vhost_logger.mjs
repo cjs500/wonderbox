@@ -48,7 +48,7 @@ class vhost_logger {
 
     //System paths
     paths = {}                          //System paths
-    default_log_name = "system";   //Log filename or syslog identifier
+    default_log_name = "system";        //Log filename or syslog identifier
     server = "";
 
     //Syslog File Parameters

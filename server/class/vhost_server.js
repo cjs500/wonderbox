@@ -796,7 +796,7 @@ class vhost_server {
             time = new Date()
             end_time = time.getTime()
             this_request["time"] = (end_time-start_time);
-            this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request["full_url"]}`;
+            this_request["message"] = `Request Time [${this_request.time} ms] > [${this_request.client_agent}] [${this_request.status_code}] ${this_request.full_url}`;
             this.log(this_request)
 
             //Send client side files

@@ -282,7 +282,7 @@ class vhost_logger {
     }
     log_file(log) {
         //Append Standard Log File
-        let log_entry = `${log._timestamp} [server:${log._server}] [pid:${log._process_id}] [ver:${log._node_version}] [state:${log.state}] -- ${log.message}\n`;
+        let log_entry = `${log._timestamp} [server:${log._server_hostname}] [pid:${log._process_id}] [ver:${log._node_version}] [state:${log.state}] -- ${log.message}\n`;
         let log_file = path.join(this.paths["logs"], this.file_text);
         fs.appendFile(log_file, log_entry, err => {
             if (err) {

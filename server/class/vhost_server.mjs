@@ -602,6 +602,14 @@ class vhost_server {
         let start_time = time.getTime();
         let end_time = null;
 
+        //Raw Headers
+        let _headers = {};
+        for(let i = 0; i <= (req.rawHeaders.length-1) ; i++ ){
+            if(i % 2 != 1) {
+                _headers[(req.rawHeaders[i]).toLowerCase()] = req.rawHeaders[i+1]
+            }
+        }
+
         //Define _server
         let _server = {
             "local_ipv4":this.ipv4_address,
@@ -644,27 +652,14 @@ class vhost_server {
                 }
             }
         }
-        if(req.headers['x-forwarded-for'] != undefined) {
-            _client["remote_ip_xff"] = req.headers['x-forwarded-for'];
+        if(_headers['x-forwarded-for'] != undefined) {
+            _client["remote_ip_xff"] = _headers['x-forwarded-for'];
         }
-        if(req.rawHeaders != undefined) {
-            let a_i = req.rawHeaders.indexOf("User-Agent");
-            let c_i = req.rawHeaders.indexOf("Cookie");
-
-            if(a_i > -1) {
-                _client["user_agent"] = req.rawHeaders[a_i + 1];
-            }
-            if(c_i > -1) {
-                _client["cookie"] = req.rawHeaders[c_i + 1];
-            }
+        if(_headers["user-agent"] != undefined) {
+            _client["user_agent"] = _headers["user-agent"]
         }
-
-        //Raw Headers
-        let _headers = {};
-        for(let i = 0; i <= (req.rawHeaders.length-1) ; i++ ){
-            if(i % 2 != 1) {
-                _headers[req.rawHeaders[i]] = req.rawHeaders[i+1]
-            }
+        if(_headers["cookie"] != undefined) {
+            _client["cookie"] = _headers["cookie"]
         }
 
         //Parse URL

@@ -648,8 +648,8 @@ class vhost_server {
                 }
             }
         }
-        if(req.headers['x-forwarded-for'] != undefined) {
-            _client["remote_ip_xff"] = req.headers['x-forwarded-for'];
+        if(_headers['x-forwarded-for'] != undefined) {
+            _client["remote_ip_xff"] = _headers['x-forwarded-for'];
         }
         if(_headers["user-agent"] != undefined) {
             _client["user_agent"] = _headers["user-agent"]

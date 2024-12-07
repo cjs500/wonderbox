@@ -64,6 +64,7 @@ try{
 //Set Node JS constants
 const cluster = require("cluster");
 const path = require("path");
+const process = require("process");
 
 //Set vhost class
 const vhost_server = require(path.join(__dirname,"server","class","vhost_server.js"));
@@ -79,6 +80,12 @@ var workers = server.get("workers")
 var debug_mode = server.get("debug_mode_on")
 var auto_refresh = server.get("auto_refresh_on")
 var refresh_timer = server.get("auto_refresh_timer")
+
+//Catch signal kill
+process.on('SIGINT', () => {
+    console.info("Signal Process End")
+    process.exit(0)
+});
 
 //Cluster
 if(cluster.isMaster) {

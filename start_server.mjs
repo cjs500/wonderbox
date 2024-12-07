@@ -32,6 +32,7 @@ Web server start script, node process cluster manager
 
 //Import node modules
 import cluster from "node:cluster";
+import process from "node:process";
 
 //Import vhost server class
 import vhost_server from "./server/class/vhost_server.mjs";
@@ -49,6 +50,12 @@ var auto_refresh = server.get("auto_refresh_on")
 var refresh_timer = server.get("auto_refresh_timer")
 var cache_on = server.get("cache_on")
 var cache_reset_timer = null;
+
+//Catch signal kill
+process.on('SIGINT', () => {
+    console.info("Signal Process End")
+    process.exit(0)
+});
 
 //Cluster
 if(cluster.isMaster) {

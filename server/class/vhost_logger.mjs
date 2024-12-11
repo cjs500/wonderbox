@@ -75,6 +75,9 @@ class vhost_logger {
 
         //Load config
         this.load_config();
+
+        //Check Environment Variable Overrides (containers)
+        this.check_env_overrides();
     }
     define_paths() {
         //Set root
@@ -180,6 +183,36 @@ class vhost_logger {
         if(if_app_ver == true) {
             let content	= fs.readFileSync(app_ver);
             this.application_ver = content.toString();
+        }
+    }
+    check_env_overrides() {
+        //Check environment when used in container environments
+        for(let e in process.env) {
+            switch(e) {
+                case "PURRBOX_LOG_TYPE":
+                    if(process.env[e] == "none") {
+                        this.syslog_use = "none";
+                    }
+                    if(process.env[e] == "file") {
+                        this.syslog_use = "file";
+                    }
+                    if(process.env[e] == "server") {
+                        this.syslog_use = "server";
+                    }
+                break;
+                case "PURRBOX_LOG_FILE_KEEP_DAYS":
+                    this.files_old = this.calc_log_file_days(process.env[e]);
+                break;
+                case "PURRBOX_LOG_SERVER_IPADDR":
+                    this.server_ipaddr = process.env[e];
+                break;
+                case "PURRBOX_LOG_SERVER_PORT":
+                    this.server_port = process.env[e];
+                break;
+                case "PURRBOX_LOG_SERVER_PROTOCOL":
+                    this.server_protocol = process.env[e];
+                break;
+            }
         }
     }
 

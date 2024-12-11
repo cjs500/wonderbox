@@ -89,6 +89,9 @@ class vhost_mapping {
 
         //Load server configuration
         this.load_server_config()
+
+        //Check Environment Variable Overrides (containers)
+        this.check_env_overrides()
     }
 
     define_paths() {
@@ -234,6 +237,56 @@ class vhost_mapping {
         if(ipaddr != null) {
             if(ipaddr != "" && this.mgmt_ui.indexOf(ipaddr) == -1) {
                 this.mgmt_ui.push(ipaddr);
+            }
+        }
+    }
+    check_env_overrides() {
+        //Check environment when used in container environments
+        for(let e in process.env) {
+            switch(e) {
+                case "PURRBOX_DEBUG_MODE_ON":
+                    if(process.env[e] == 0) {
+                        this.debug_mode_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.debug_mode_on = true;
+                    }   
+                break;
+                case "PURRBOX_MGMT_MODE":
+                    if(process.env[e] == 0) {
+                        this.mgmt_mode = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.mgmt_mode = true;
+                    }
+                break;
+                case "PURRBOX_MGMT_UI":
+                    try{
+                        let parse_mgmt_ui = process.env[e].split(",");
+                        for(let i in parse_mgmt_ui) {
+                            this.mgmt_ui.push(parse_mgmt_ui[i]);
+                        }
+                    }catch(err) {
+                        console.log(err);
+                    }
+                break;
+                case "PURRBOX_ENV":
+                    if(process.env[e].toLowerCase() == "dev") {
+                        this.environment = "dev";
+                    }
+                    if(process.env[e].toLowerCase() == "qa") {
+                        this.environment = "qa";
+                    }
+                    if(process.env[e].toLowerCase() == "stage") {
+                        this.environment = "stage";
+                    }
+                    if(process.env[e].toLowerCase() == "prod") {
+                        this.environment = "prod";
+                    }
+                break;
+                case "PURRBOX_ENV_NAME":
+                    this.environment_name = process.env[e];
+                break;
             }
         }
     }

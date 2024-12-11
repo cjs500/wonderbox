@@ -81,6 +81,10 @@ class vhost_server {
     auto_refresh_on=true;       //Web project configuration auto reload on changes
     auto_refresh_timer=10000;   //Time check for config changes (1,000 = 1 second)
 
+    //HTTP Listeners
+    http_listener = null;
+    https_listener = null;
+
     //Start up cached files
     running_cache = {}
 
@@ -99,10 +103,16 @@ class vhost_server {
         this.define_paths()
 
         //Check essetial files
-        this.check_paths();
+        this.check_paths()
 
         //Load vhost_server config
-        this.load_server_config();
+        this.load_server_config()
+
+        //Check Environment Variable Overrides (containers)
+        this.check_env_overrides()
+
+        //Check SSL certificates
+        this.check_ssl_exist()
 
         //Capture cached files
         this.running_cache = JSON.parse(JSON.stringify(require.cache));
@@ -156,8 +166,8 @@ class vhost_server {
                 "http_port":80,
                 "https_on":true,
                 "https_port":443,
-                "ssl_key":"key.pem",
-                "ssl_cert":"cert.pem",
+                "ssl_key":"ssl.key",
+                "ssl_cert":"ssl.crt",
                 "auto_refresh_on":true,
                 "auto_refresh_timer":5000
             }
@@ -349,6 +359,142 @@ class vhost_server {
             }
         }
     }
+    check_env_overrides() {
+        //Check environment when used in container environments
+        for(let e in process.env) {
+            switch(e) {
+                case "PURRBOX_WORKERS":
+                    if(process.env[e] > 0) {
+                        this.workers = process.env[e];
+                    }
+                break;
+                case "PURRBOX_CACHE_ON":
+                    if(process.env[e] == 0) {
+                        this.cache_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.cache_on = true;
+                    }   
+                break;
+                case "PURRBOX_DEBUG_MODE_ON":
+                    if(process.env[e] == 0) {
+                        this.debug_mode_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.debug_mode_on = true;
+                    }   
+                break;
+                case "PURRBOX_MGMT_MODE":
+                    if(process.env[e] == 0) {
+                        this.mgmt_mode = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.mgmt_mode = true;
+                    }
+                break;
+                case "PURRBOX_MGMT_UI":
+                    try{
+                        let parse_mgmt_ui = process.env[e].split(",");
+                        for(let i in parse_mgmt_ui) {
+                            this.mgmt_ui.push(parse_mgmt_ui[i]);
+                        }
+                    }catch(err) {
+                        console.log(err);
+                    }
+                break;
+                case "PURRBOX_ENV":
+                    if(process.env[e].toLowerCase() == "dev") {
+                        this.environment = "dev";
+                    }
+                    if(process.env[e].toLowerCase() == "qa") {
+                        this.environment = "qa";
+                    }
+                    if(process.env[e].toLowerCase() == "stage") {
+                        this.environment = "stage";
+                    }
+                    if(process.env[e].toLowerCase() == "prod") {
+                        this.environment = "prod";
+                    }
+                break;
+                case "PURRBOX_ENV_NAME":
+                    this.environment_name = process.env[e];
+                break;
+                case "PURRBOX_HTTP_ON":
+                    if(process.env[e] == 0) {
+                        this.http_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.http_on = true;
+                    }
+                break;
+                case "PURRBOX_HTTP_PORT":
+                    if(process.env[e] > 0) {
+                        this.http_port = Number(process.env[e]);
+                    }
+                break;
+                case "PURRBOX_HTTPS_ON":
+                    if(process.env[e] == 0) {
+                        this.https_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.https_on = true;
+                    }
+                break;
+                case "PURRBOX_HTTPS_PORT":
+                    if(process.env[e] > 0) {
+                        this.https_port = Number(process.env[e]);
+                    }
+                break;
+                case "PURRBOX_SSL_KEY_FILE":
+                    this.ssl_key = process.env[e];
+                break;
+                case "PURRBOX_SSL_CERT_FILE":
+                    this.ssl_cert = process.env[e];
+                break;
+                case "PURRBOX_AUTO_REFRESH_ON":
+                    if(process.env[e] == 0) {
+                        this.auto_refresh_on = false;
+                    }
+                    if(process.env[e] == 1) {
+                        this.auto_refresh_on = true;
+                    }
+                break;
+                case "PURRBOX_AUTO_REFRESH_TIMER":
+                    if(process.env[e] > 5000) {
+                        this.auto_refresh_timer = Number(process.env[e]);
+                    }
+                break;
+            }
+        }
+    }
+    check_ssl_exist() {
+        //Define location where SSL should reside
+        if(this.https_on == true) {
+            //Set SSL default locations
+            let default_ssl_key = path.join(this.paths.server, "default_ssl", "ssl.key");
+            let default_ssl_cert = path.join(this.paths.server, "default_ssl", "ssl.crt");
+
+            //Get settings
+            if(this.ssl_key == "") {
+                this.ssl_key = "ssl.key";
+            }
+            if(this.ssl_cert == "") {
+                this.ssl_cert = "ssl.crt";
+            }
+
+            //Set SSL config locations
+            let ssl_key = path.join(this.paths.conf, this.ssl_key);
+            let ssl_cert = path.join(this.paths.conf, this.ssl_cert);
+
+            //Check if SSL exists in conf
+            if(!fs.existsSync(ssl_key)){
+                fs.copyFileSync(default_ssl_key, ssl_key)
+            }
+            if(!fs.existsSync(ssl_cert)){
+                fs.copyFileSync(default_ssl_cert, ssl_cert)
+            }   
+        }
+    }
 
     //Logging
     async log(data={}) {
@@ -523,12 +669,9 @@ class vhost_server {
 
         //Start HTTPS server
         if(this.https_on == true) {
-            //Load SSL certificate files
-            let ssl_path = this.paths["conf"];
-
             //Load SSL files
-            let ssl_key = `${ssl_path}${this.ssl_key}`;
-            let ssl_cert = `${ssl_path}${this.ssl_cert}`;
+            let ssl_key = path.join(this.paths.conf, this.ssl_key);
+            let ssl_cert = path.join(this.paths.conf, this.ssl_cert);
             let if_ssl_key_exists = fs.existsSync(ssl_key);
             let if_ssl_cert_exists = fs.existsSync(ssl_cert);
             if(if_ssl_key_exists == true && if_ssl_cert_exists == true) {
@@ -564,7 +707,7 @@ class vhost_server {
         var parent = this;
 
         //Create server
-        http.createServer(function (req, res) {
+        this.http_listener = http.createServer(function (req, res) {
             //Process request
             parent.client_request("http", req, res)
         }).listen(this.http_port);
@@ -579,8 +722,9 @@ class vhost_server {
     start_https_server() {
         //Reference to parent class
         var parent = this;
-        
-        https.createServer(this.ssl_certificate, function (req, res) {
+
+        //Create server
+        this.https_listener = https.createServer(this.ssl_certificate, function (req, res) {
             //Process request
             parent.client_request("https", req, res)
         }).listen(this.https_port);

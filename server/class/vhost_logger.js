@@ -72,6 +72,9 @@ class vhost_logger {
 
         //Load config
         this.load_config();
+
+        //Check Environment Variable Overrides (containers)
+        this.check_env_overrides();
     }
     define_paths() {
         //Set root
@@ -134,29 +137,8 @@ class vhost_logger {
 
             if(json["file"]["delete_older"] != undefined) {
                 let field = json["file"]["delete_older"]; 
-                let unit = field.slice(-1);
-                let num = field.replace(/\D/g,'');
-                let calc_time;
-                switch(unit) {
-                    case "m":
-                        calc_time = num * (60 * 1000);
-                        break;
-                    case "h":
-                        calc_time = num * (60 * 60 * 1000);
-                        break;
-                    case "d":
-                        calc_time = num * (60 * 60 * 24 * 1000);
-                        break;
-                    case "w":
-                        calc_time = num * (60 * 60 * 24 * 7 * 1000);
-                        break;
-                    default:
-                        //Default to second
-                        calc_time = num * 1000;
-                }
-                this.files_old = calc_time;
+                this.files_old = this.calc_log_file_days(field);
             }
-
             if(json["server"]["ipaddr"] != undefined) {
                 this.server_ipaddr = json["server"]["ipaddr"];
             }
@@ -178,6 +160,64 @@ class vhost_logger {
             let content	= fs.readFileSync(app_ver);
             this.application_ver = content.toString();
         }
+    }
+    check_env_overrides() {
+        //Check environment when used in container environments
+        for(let e in process.env) {
+            switch(e) {
+                case "PURRBOX_LOG_TYPE":
+                    if(process.env[e] == "none") {
+                        this.syslog_use = "none";
+                    }
+                    if(process.env[e] == "file") {
+                        this.syslog_use = "file";
+                    }
+                    if(process.env[e] == "server") {
+                        this.syslog_use = "server";
+                    }
+                break;
+                case "PURRBOX_LOG_FILE_KEEP_DAYS":
+                    this.files_old = this.calc_log_file_days(process.env[e]);
+                break;
+                case "PURRBOX_LOG_SERVER_IPADDR":
+                    this.server_ipaddr = process.env[e];
+                break;
+                case "PURRBOX_LOG_SERVER_PORT":
+                    this.server_port = process.env[e];
+                break;
+                case "PURRBOX_LOG_SERVER_PROTOCOL":
+                    this.server_protocol = process.env[e];
+                break;
+            }
+        }
+    }
+
+    //Calulate time
+    calc_log_file_days(field) {
+        //Calculate time in seconds
+        let unit = field.slice(-1);
+        let num = field.replace(/\D/g,'');
+        let calc_time;
+        switch(unit) {
+            case "m":
+                calc_time = num * (60 * 1000);
+                break;
+            case "h":
+                calc_time = num * (60 * 60 * 1000);
+                break;
+            case "d":
+                calc_time = num * (60 * 60 * 24 * 1000);
+                break;
+            case "w":
+                calc_time = num * (60 * 60 * 24 * 7 * 1000);
+                break;
+            default:
+                //Default to second
+                calc_time = num * 1000;
+        }
+
+        //Return value
+        return calc_time;
     }
 
     //Logging functions

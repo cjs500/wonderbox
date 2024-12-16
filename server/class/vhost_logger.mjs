@@ -140,29 +140,8 @@ class vhost_logger {
 
             if(json["file"]["delete_older"] != undefined) {
                 let field = json["file"]["delete_older"]; 
-                let unit = field.slice(-1);
-                let num = field.replace(/\D/g,'');
-                let calc_time;
-                switch(unit) {
-                    case "m":
-                        calc_time = num * (60 * 1000);
-                        break;
-                    case "h":
-                        calc_time = num * (60 * 60 * 1000);
-                        break;
-                    case "d":
-                        calc_time = num * (60 * 60 * 24 * 1000);
-                        break;
-                    case "w":
-                        calc_time = num * (60 * 60 * 24 * 7 * 1000);
-                        break;
-                    default:
-                        //Default to second
-                        calc_time = num * 1000;
-                }
-                this.files_old = calc_time;
+                this.files_old = this.calc_log_file_days(field);
             }
-
             if(json["server"]["ipaddr"] != undefined) {
                 this.server_ipaddr = json["server"]["ipaddr"];
             }
@@ -214,6 +193,34 @@ class vhost_logger {
                 break;
             }
         }
+    }
+    
+    //Calulate time
+    calc_log_file_days(field) {
+        //Calculate time in seconds
+        let unit = field.slice(-1);
+        let num = field.replace(/\D/g,'');
+        let calc_time;
+        switch(unit) {
+            case "m":
+                calc_time = num * (60 * 1000);
+                break;
+            case "h":
+                calc_time = num * (60 * 60 * 1000);
+                break;
+            case "d":
+                calc_time = num * (60 * 60 * 24 * 1000);
+                break;
+            case "w":
+                calc_time = num * (60 * 60 * 24 * 7 * 1000);
+                break;
+            default:
+                //Default to second
+                calc_time = num * 1000;
+        }
+
+        //Return value
+        return calc_time;
     }
 
     //Logging functions

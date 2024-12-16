@@ -86,6 +86,10 @@ class vhost_server {
     auto_refresh_on=true;       //Web project configuration auto reload on changes
     auto_refresh_timer=10000;   //Time check for config changes (1,000 = 1 second)
 
+    //HTTP Listeners
+    http_listener = null;
+    https_listener = null;
+
     //Signal to restart process (unload modules - cache mode false)
     reset_process = false;
 
@@ -708,7 +712,7 @@ class vhost_server {
         var parent = this;
 
         //Create server
-        http.createServer(function (req, res) {
+        this.http_listener = http.createServer(function (req, res) {
             //Process request
             parent.client_request("http", req, res)
         }).listen(this.http_port);
@@ -724,7 +728,8 @@ class vhost_server {
         //Reference to parent class
         var parent = this;
         
-        https.createServer(this.ssl_certificate, function (req, res) {
+        //Create server
+        this.https_listener = https.createServer(this.ssl_certificate, function (req, res) {
             //Process request
             parent.client_request("https", req, res)
         }).listen(this.https_port);
@@ -931,6 +936,7 @@ class vhost_server {
         //
         // Cache function not used is ECMAScript, use process kill and cluster restart process
         // Process kill for sever side execute only
+        //
         //
 
         //Handle exec type

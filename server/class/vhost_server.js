@@ -1166,6 +1166,7 @@ class vhost_server {
         console.log(`   Management Mode         : ${this.mgmt_mode}`);
         console.log(`   Management UI Hostnames : ${mgmt_list}`);
         console.log(`   Environment             : ${this.environment}`);
+        console.log(`   Environment Name        : ${this.environment_name}`);
         console.log(`   Cache Mode On           : ${this.cache_on}`);
         console.log(`   Debug Mode On           : ${this.debug_mode_on}`);
         console.log(`   Auto Refresh            : ${this.auto_refresh_on}`);

@@ -137,7 +137,7 @@ class vhost_logger {
 
             if(json["file"]["delete_older"] != undefined) {
                 let field = json["file"]["delete_older"]; 
-                this.files_old = this.calc_log_file_days(field);
+                this.files_old = this.calc_log_file_purge(field);
             }
             if(json["server"]["ipaddr"] != undefined) {
                 this.server_ipaddr = json["server"]["ipaddr"];
@@ -176,8 +176,8 @@ class vhost_logger {
                         this.syslog_use = "server";
                     }
                 break;
-                case "PURRBOX_LOG_FILE_KEEP_DAYS":
-                    this.files_old = this.calc_log_file_days(process.env[e]);
+                case "PURRBOX_LOG_FILE_PURGE":
+                    this.files_old = this.calc_log_file_purge(process.env[e]);
                 break;
                 case "PURRBOX_LOG_SERVER_IPADDR":
                     this.server_ipaddr = process.env[e];
@@ -193,7 +193,7 @@ class vhost_logger {
     }
 
     //Calulate time
-    calc_log_file_days(field) {
+    calc_log_file_purge(field) {
         //Calculate time in seconds
         let unit = field.slice(-1);
         let num = field.replace(/\D/g,'');

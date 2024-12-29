@@ -85,8 +85,9 @@ class vhost_server {
     http_listener = null;
     https_listener = null;
 
-    //Start up cached files
-    running_cache = {}
+    //Signal to restart process (unload modules - cache mode false)
+    reset_process = false;
+    reset_scan = {}
 
     //System paths
     paths = {}                  //System paths
@@ -113,9 +114,6 @@ class vhost_server {
 
         //Check SSL certificates
         this.check_ssl_exist()
-
-        //Capture cached files
-        this.running_cache = JSON.parse(JSON.stringify(require.cache));
 
         //Run startup map
         mapping.map_generate()
@@ -533,7 +531,7 @@ class vhost_server {
         //Output in debug mode
         if(this.debug_mode_on == true) {
             if(data.message != undefined) {
-                console.log(` :: ${this_log.message}`);
+                console.log(` :: [pid:${process.pid}] ${this_log.message}`);
             }
         }
 
@@ -606,6 +604,9 @@ class vhost_server {
             case "workers":
                 return this.workers;
             break;
+            case "cache_on":
+                return this.cache_on;
+            break;            
             case "debug_mode_on":
                 return this.debug_mode_on;
             break;            
@@ -647,6 +648,54 @@ class vhost_server {
 
             //Update changes
             mapping.map_generate();
+        }
+    }
+    refresh_scan_source() {
+        //Scan files for changes
+        if(this.cache_on == false) {
+            this.refresh_scan_path(this.paths.web_source);
+        }
+    }
+    refresh_scan_path(target_path) {
+        //Loop path
+        let dir = fs.readdirSync(target_path)
+        for(let i in dir) {
+            //Directory target
+            let new_target = path.join(target_path, dir[i])
+            if(fs.lstatSync(new_target).isDirectory()) {
+                this.refresh_scan_path(new_target);
+            }
+            if(fs.lstatSync(new_target).isFile()) {
+                if(path.basename(new_target) != "config.json") {
+                    this.refresh_scan_tracking(new_target);
+                }
+            }
+
+            //Abort scan on reset
+            if(this.reset_process == true) {
+                return;
+            }
+        }
+    }
+    refresh_scan_tracking(target_path) {
+        //Check timestamp
+        let stat = fs.statSync(target_path);
+        if(this.reset_scan[target_path] == undefined) {
+            this.reset_scan[target_path] = {
+                "timestamp":stat.mtime,
+                "data":null
+            }
+        }else{
+            if(stat.mtime > this.reset_scan[target_path]["timestamp"]) {
+                this.reset_process = true;
+                this.log({
+                    "source":"system",
+                    "state":"info",
+                    "message":`cache_mode = false :: file change detected [${target_path}]`
+                })
+                process.send("cache_reset")
+                return;
+            }
         }
     }
 
@@ -928,12 +977,6 @@ class vhost_server {
             _request.fixed_api_path = request_match.fixed_api_path;
         }
 
-        //Unload the server side file if cache is false (used when content is static)
-        if(this.cache_on == false) {
-            //delete require.cache[file_path];
-            this.clear_cahced()
-        }
-
         //Handle exec type
         if(exec_mode == "client") {
             //End time and request log
@@ -1079,9 +1122,6 @@ class vhost_server {
         res.end(`{"error":"500 Internal Server Error"}`);
     }
     exec_server_side_error(res, file_path, catch_error, this_request) {
-        //Unload the server side file on error
-        delete require.cache[file_path];
-
         //End time and request log
         let time = new Date()
         let end_time = time.getTime()
@@ -1121,24 +1161,7 @@ class vhost_server {
         //Get mime type
         return mime_types[this_ext] || mime_types.default;
     }
-
-    //Server cache mode = false, unload cached files (not node modules loaded via server)
-    clear_cahced() {
-        for(let cached in require.cache) {
-            if(!(cached.includes("node_modules"))) {
-                if(this.running_cache[cached] == undefined) {
-                    this.log({
-                        "source":"system",
-                        "state":"info",
-                        "message":`server.cache_on = false, remove module from server cache [${cached}]`
-                    })
-
-                    delete require.cache[cached];
-                }
-            }
-        }
-    }
-
+    
     //////////////////////////////////////
     // Debug mode functions
     //////////////////////////////////////

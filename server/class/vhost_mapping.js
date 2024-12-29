@@ -341,7 +341,7 @@ class vhost_mapping {
         //Output in debug mode
         if(this.debug_mode_on == true) {
             if(data.message != undefined) {
-                console.log(` :: ${this_log.message}`);
+                console.log(` :: [pid:${process.pid}] ${this_log.message}`);
             }
         }
 
@@ -2826,13 +2826,6 @@ class vhost_mapping {
         //Return match
         return match;
     }
-
-
-    //Post match (other errors) -- after server side execute failures occur
-    // 403 forbidden -- IP restrictions? feature on website settings consider for future state
-    // 414 query too long -- does this trigger on connection to HTTP listener
-    // 500 website error catch default
-
 }
 
 //Export modules

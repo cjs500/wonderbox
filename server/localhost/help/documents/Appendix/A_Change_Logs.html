@@ -1,15 +1,16 @@
 <h1>Change Log Information</h1>
-<h3>v1.0.1</h3>
+<h3>v1.1.0</h3>
 <blue>Add ECMAScript mode</blue><br />
-- Enable server process to run in 'CommonJS' or 'ECMAScript' mode via alternate server start option.<br />
+- Enable server process to run in 'CommonJS' or 'ECMAScript' mode via alternate server start script.<br />
 <blue>VHost server process</blue><br />
 - Add process terminate signal catch<br />
-- Implement environment variable setting overrides for containerization<br />
+- Implement environment variable setting overrides for docker containers<br />
 - Detect missing SSL certificates and create default ones<br />
 - Correct header parsing in containers<br />
+- Change cache on function. Detect file changes in web_source folder and restart process<br />
 <blue>Logging</blue><br />
 - Add fields to log outputs<br />
-- Startup logging for container logs<br />
+- Startup cleanup for container logs<br />
 <blue>Management UI</blue><br />
 - Allow view of YAML files<br />
 - Correct HTTP and HTTPS links from resolve sections<br />
@@ -17,7 +18,7 @@
 - Add advanced uses documents<br />
 - Updates to help documents<br />
 <blue>General</blue><br />
-- Various bug fixes in logging<br />
+- Various bug fixes<br />
 <br />
 <h3>v1.0.0</h3>
 <blue>Management UI cleanup</blue><br />

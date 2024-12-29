@@ -92,6 +92,7 @@ class vhost_server {
 
     //Signal to restart process (unload modules - cache mode false)
     reset_process = false;
+    reset_scan = {}
 
     //System paths
     paths = {}                  //System paths
@@ -118,9 +119,6 @@ class vhost_server {
 
         //Check SSL certificates
         this.check_ssl_exist()
-
-        //Capture cached files
-        //ECMAScript doesn't use require cache
 
         //Run startup map
         mapping.map_generate()
@@ -171,8 +169,8 @@ class vhost_server {
                 "http_port":80,
                 "https_on":true,
                 "https_port":443,
-                "ssl_key":"key.pem",
-                "ssl_cert":"cert.pem",
+                "ssl_key":"ssl.key",
+                "ssl_cert":"ssl.crt",
                 "auto_refresh_on":true,
                 "auto_refresh_timer":5000
             }
@@ -538,7 +536,7 @@ class vhost_server {
         //Output in debug mode
         if(this.debug_mode_on == true) {
             if(data.message != undefined) {
-                console.log(` :: ${this_log.message}`);
+                console.log(` :: [pid:${process.pid}] ${this_log.message}`);
             }
         }
 
@@ -611,6 +609,9 @@ class vhost_server {
             case "workers":
                 return this.workers;
             break;
+            case "cache_on":
+                return this.cache_on;
+            break;            
             case "debug_mode_on":
                 return this.debug_mode_on;
             break;            
@@ -652,6 +653,54 @@ class vhost_server {
 
             //Update changes
             mapping.map_generate();
+        }
+    }
+    refresh_scan_source() {
+        //Scan files for changes
+        if(this.cache_on == false) {
+            this.refresh_scan_path(this.paths.web_source);
+        }
+    }
+    refresh_scan_path(target_path) {
+        //Loop path
+        let dir = fs.readdirSync(target_path)
+        for(let i in dir) {
+            //Directory target
+            let new_target = path.join(target_path, dir[i])
+            if(fs.lstatSync(new_target).isDirectory()) {
+                this.refresh_scan_path(new_target);
+            }
+            if(fs.lstatSync(new_target).isFile()) {
+                if(path.basename(new_target) != "config.json") {
+                    this.refresh_scan_tracking(new_target);
+                }
+            }
+
+            //Abort scan on reset
+            if(this.reset_process == true) {
+                return;
+            }
+        }
+    }
+    refresh_scan_tracking(target_path) {
+        //Check timestamp
+        let stat = fs.statSync(target_path);
+        if(this.reset_scan[target_path] == undefined) {
+            this.reset_scan[target_path] = {
+                "timestamp":stat.mtime,
+                "data":null
+            }
+        }else{
+            if(stat.mtime > this.reset_scan[target_path]["timestamp"]) {
+                this.reset_process = true;
+                this.log({
+                    "source":"system",
+                    "state":"info",
+                    "message":`cache_mode = false :: file change detected [${target_path}]`
+                })
+                process.send("cache_reset")
+                return;
+            }
         }
     }
 
@@ -933,12 +982,6 @@ class vhost_server {
             _request.fixed_api_path = request_match.fixed_api_path;
         }
 
-        //
-        // Cache function not used is ECMAScript, use process kill and cluster restart process
-        // Process kill for sever side execute only
-        //
-        //
-
         //Handle exec type
         if(exec_mode == "client") {
             //End time and request log
@@ -1004,7 +1047,7 @@ class vhost_server {
         }
     }
     async exec_server_side(res, file_path, params, this_request) {
-        //Adjust windows path issues
+        //Adjust windows path issues (ECMAScript mode)
         if(file_path.includes("\\")) {
             file_path = file_path.replaceAll("\\", "/");
             file_path = file_path.substring(2,(file_path.length));
@@ -1022,13 +1065,6 @@ class vhost_server {
             this.exec_server_side_response(res, file_path, response, this_request)
         }catch(err){
             this.exec_server_side_error(res, file_path, err, this_request);
-        }
-
-        //Restart process
-        if(this.cache_on == false) {
-            //Reset processes
-            console.log(` :: Cache mode disabled - terminate worker process to reload modules`)
-            process.send("cache_reset")
         }
     }
     exec_server_side_response(res, file_path, response, this_request) {
@@ -1097,9 +1133,6 @@ class vhost_server {
         res.end(`{"error":"500 Internal Server Error"}`);
     }
     exec_server_side_error(res, file_path, catch_error, this_request) {
-        //Delete cache not required in ECMAScript
-        //
-
         //End time and request log
         let time = new Date()
         let end_time = time.getTime()
@@ -1138,23 +1171,6 @@ class vhost_server {
 
         //Get mime type
         return mime_types[this_ext] || mime_types.default;
-    }
-
-    //Server cache mode = false, unload cached files (not node modules loaded via server)
-    clear_cahced() {
-        for(let cached in require.cache) {
-            if(!(cached.includes("node_modules"))) {
-                if(this.running_cache[cached] == undefined) {
-                    this.log({
-                        "source":"system",
-                        "state":"info",
-                        "message":`server.cache_on = false, remove module from server cache [${cached}]`
-                    })
-
-                    delete require.cache[cached];
-                }
-            }
-        }
     }
 
     //////////////////////////////////////

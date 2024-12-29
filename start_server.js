@@ -64,7 +64,6 @@ try{
 //Set Node JS constants
 const cluster = require("cluster");
 const path = require("path");
-const process = require("process");
 
 //Set vhost class
 const vhost_server = require(path.join(__dirname,"server","class","vhost_server.js"));
@@ -77,13 +76,14 @@ const logger = new vhost_logger()
 //Set parameters
 var app_ver = `${server.application} ${server.application_ver} ${server.application_mode}`
 var workers = server.get("workers")
-var debug_mode = server.get("debug_mode_on")
+var cache_on = server.get("cache_on")
 var auto_refresh = server.get("auto_refresh_on")
 var refresh_timer = server.get("auto_refresh_timer")
+var cache_reset_timer = null;
 
 //Catch signal kill
 process.on('SIGINT', () => {
-    console.info("Signal Process End")
+    console.info(` :: [pid:${process.pid}] Signal Process End`)
     process.exit(0)
 });
 
@@ -103,37 +103,67 @@ if(cluster.isMaster) {
     server.output_server_settings();
 
     //Verify settings to start
-    if(debug_mode == true && workers > 1) {
-        console.log("   ** Debug mode is disabled when running more than one worker process");
-    }
     if(workers == undefined) { 
         console.log("   ** Server config missing workers = <number> setting");
         process.exit();
+    }
+
+    //Set message listener
+    function worker_listeners() {
+        for (let id in cluster.workers) {
+            cluster.workers[id].on('message', worker_msg);
+        }
+    }
+    //Check for worker messages
+    function worker_msg(msg) {
+        console.log(` :: [pid:${process.pid}] Cluster Worker message: ${msg}`)
+
+        //Set worker reset if no timer set and 
+        if(msg == "cache_reset" && cache_reset_timer == null) {
+            cache_reset_timer = setTimeout(worker_reset, 100);
+        }
+    }
+    function worker_reset() {
+        cache_reset_timer = null;
+        for (let id in cluster.workers) {
+            cluster.workers[id].kill();
+        }
     }
 
     //Start workers
     for (let i = 0; i < workers; i++) {
         cluster.fork();
     }
+    worker_listeners();
 
-    // Restart node on failure
+    //Restart node on failure
     cluster.on("exit", (worker, code, signal) => {
-        console.log(` :: VHost Worker exit :: pid[${worker.process.pid}] code[${code}] signal[${signal}]`);
+        console.log(` :: [pid:${process.pid}] VHost Worker exit :: code[${code}] signal[${signal}]`);
         cluster.fork();
+        worker_listeners();
     });
 }else{
 
-    console.log(` :: VHost Worker started. pid[${process.pid}]`);
+    console.log(` :: [pid:${process.pid}] VHost Worker started`);
 
-    //Load web source configs
+    //Scan web config mapping and source file changes
     server.refresh_web_configs();
+    server.refresh_scan_source();
 
 	//Set refresh timer to periodically refresh web project configurations without server reload
-	function refresh_web_configs() {
+	function refresh_source() {
 		server.refresh_web_configs();
 	}    
 	if(auto_refresh == true) {
-		setInterval(refresh_web_configs, refresh_timer);
+		setInterval(refresh_source, refresh_timer);
+	}
+
+    //Cache off check
+    function cache_reset_check() {
+        server.refresh_scan_source();
+    }
+    if(cache_on == false) {
+		setInterval(cache_reset_check, 1000);
 	}
 
 	//Start server listeners
